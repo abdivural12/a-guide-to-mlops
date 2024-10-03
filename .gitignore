@@ -8,4 +8,4 @@ __pycache__/
 
 # DVC will add new files after this line
 /model
-.venv/
+*.so
