@@ -78,15 +78,11 @@ jobs:
           username: _json_key
           password: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
 
-      - name: Import the BentoML model
-        if: github.ref == 'refs/heads/main'
-        run: bentoml models import model/celestial_bodies_classifier_model.bentomodel
-
       - name: Build and Save the BentoML Model Artifact
         if: github.ref == 'refs/heads/main'
         run: |
           bentoml build src
-          bentoml models get celestial_bodies_classifier_model:latest || bentoml models save celestial_bodies_classifier_model
+          bentoml models get celestial_bodies_classifier_model:latest || (echo "Model not found"; exit 1)
 
       - name: Containerize and publish the BentoML model artifact Docker image
         if: github.ref == 'refs/heads/main'
