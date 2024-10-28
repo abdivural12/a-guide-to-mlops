@@ -1,15 +1,10 @@
 name: MLOps
 
 on:
-  # Runs on pushes targeting main branch
   push:
     branches:
       - main
-
-  # Runs on pull requests
   pull_request:
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
@@ -91,10 +86,9 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: bentoml build src
 
-      - name: Save the BentoML model as a Bento
+      - name: Export the BentoML model as a Bento
         if: github.ref == 'refs/heads/main'
         run: |
-          bentoml serve src/serve.py:CelestialBodiesClassifierService
           bentoml models export celestial_bodies_classifier_model:latest ./model/celestial_bodies_classifier_model.bentomodel
 
       - name: Containerize and publish the BentoML model artifact Docker image
