@@ -1,0 +1,19 @@
+name: celestial_bodies_classifier_model
+version: yn6ngxeuv6ytqaav
+module: bentoml.keras
+labels: {}
+options:
+  partial_kwargs: {}
+  include_optimizer: true
+metadata: {}
+context:
+  framework_name: keras
+  framework_versions:
+    tensorflow: 2.17.0
+  bentoml_version: 1.3.7
+  python_version: 3.11.10
+signatures:
+  predict:
+    batchable: false
+api_version: v1
+creation_time: '2024-10-27T22:06:49.171451+00:00'

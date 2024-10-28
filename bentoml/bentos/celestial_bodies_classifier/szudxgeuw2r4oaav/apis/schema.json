@@ -1,0 +1,32 @@
+{
+  "name": "celestial_bodies_classifier",
+  "type": "service",
+  "routes": [
+    {
+      "name": "predict",
+      "route": "/predict",
+      "batchable": false,
+      "input": {
+        "properties": {
+          "image": {
+            "description": "Planet image to analyze",
+            "format": "image",
+            "title": "Image",
+            "type": "file"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "title": "Input",
+        "type": "object"
+      },
+      "output": {
+        "title": "IORootModel[Annotated[str, ContentType]]",
+        "type": "string",
+        "media_type": "application/json"
+      },
+      "is_task": false
+    }
+  ]
+}

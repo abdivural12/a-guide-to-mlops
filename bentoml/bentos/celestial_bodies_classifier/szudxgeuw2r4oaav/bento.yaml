@@ -1,0 +1,73 @@
+service: serve:CelestialBodiesClassifierService
+name: celestial_bodies_classifier
+version: szudxgeuw2r4oaav
+bentoml_version: 1.3.7
+creation_time: '2024-10-27T22:55:41.506073+00:00'
+labels: {}
+models: []
+runners: []
+entry_service: celestial_bodies_classifier
+services:
+- name: celestial_bodies_classifier
+  service: ''
+  models:
+  - tag: celestial_bodies_classifier_model:yn6ngxeuv6ytqaav
+    module: bentoml.keras
+    creation_time: '2024-10-27T22:06:49.171451+00:00'
+  dependencies: []
+  config:
+    name: celestial_bodies_classifier
+envs: []
+schema:
+  name: celestial_bodies_classifier
+  type: service
+  routes:
+  - name: predict
+    route: /predict
+    batchable: false
+    input:
+      properties:
+        image:
+          description: Planet image to analyze
+          format: image
+          title: Image
+          type: file
+      required:
+      - image
+      title: Input
+      type: object
+    output:
+      title: IORootModel[Annotated[str, ContentType]]
+      type: string
+      media_type: application/json
+    is_task: false
+apis: []
+docker:
+  distro: debian
+  python_version: '3.11'
+  cuda_version: null
+  env: null
+  system_packages: null
+  setup_script: null
+  base_image: null
+  dockerfile_template: null
+python:
+  requirements_txt: null
+  packages:
+  - tensorflow==2.17.0
+  - matplotlib==3.9.2
+  - pillow==10.4.0
+  lock_packages: true
+  pack_git_packages: true
+  index_url: null
+  no_index: null
+  trusted_host: null
+  find_links: null
+  extra_index_url: null
+  pip_args: null
+  wheels: null
+conda:
+  environment_yml: null
+  channels: null
+  dependencies: null
+  pip: null
