@@ -101,7 +101,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           # Containerize the Bento
-          bentoml containerize celestial_bodies_classifier:latest \
+          bentoml containerize celestial-bodies-classifier:latest \
             --image-tag ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}/celestial-bodies-classifier:latest \
             --image-tag ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}/celestial-bodies-classifier:${{ github.sha }}
           # Push the container to the Container Registry
