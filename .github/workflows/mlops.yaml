@@ -29,7 +29,6 @@ jobs:
       - name: Install dependencies
         run: pip install --requirement requirements-freeze.txt
 
-      # Installer dvc avec le support Google Storage (gs)
       - name: Install dvc with Google Storage support
         run: pip install 'dvc[gs]'
 
@@ -91,6 +90,12 @@ jobs:
       - name: Build the BentoML model artifact
         if: github.ref == 'refs/heads/main'
         run: bentoml build src
+
+      - name: Save the BentoML model as a Bento
+        if: github.ref == 'refs/heads/main'
+        run: |
+          bentoml serve src/serve.py:CelestialBodiesClassifierService
+          bentoml models export celestial_bodies_classifier_model:latest ./model/celestial_bodies_classifier_model.bentomodel
 
       - name: Containerize and publish the BentoML model artifact Docker image
         if: github.ref == 'refs/heads/main'
