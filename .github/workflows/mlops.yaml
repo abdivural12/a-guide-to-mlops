@@ -82,14 +82,11 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: bentoml models import model/celestial_bodies_classifier_model.bentomodel
 
-      - name: Build the BentoML model artifact
-        if: github.ref == 'refs/heads/main'
-        run: bentoml build src
-
-      - name: Export the BentoML model as a Bento
+      - name: Build and Save the BentoML Model Artifact
         if: github.ref == 'refs/heads/main'
         run: |
-          bentoml models export celestial_bodies_classifier_model:latest ./model/celestial_bodies_classifier_model.bentomodel
+          bentoml build src
+          bentoml models get celestial_bodies_classifier_model:latest || bentoml models save celestial_bodies_classifier_model
 
       - name: Containerize and publish the BentoML model artifact Docker image
         if: github.ref == 'refs/heads/main'
