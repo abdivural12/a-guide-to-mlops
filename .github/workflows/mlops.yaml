@@ -32,6 +32,11 @@ jobs:
         with:
           credentials_json: '${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}'
 
+      - name: Import BentoML model to the store
+        run: |
+          mkdir -p ~/.bentoml/models
+          bentoml models import models/celestial_bodies_classifier_model.bentomodel
+
       - name: Train model
         run: dvc repro --pull
 
@@ -79,13 +84,9 @@ jobs:
           password: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
 
       - name: Build and Save the BentoML Model Artifact
-        if: github.ref == 'refs/heads/main'
-        run: |
-          bentoml build src
-          bentoml models get celestial_bodies_classifier_model:latest || (echo "Model not found"; exit 1)
+        run: bentoml build src
 
       - name: Containerize and publish the BentoML model artifact Docker image
-        if: github.ref == 'refs/heads/main'
         run: |
           bentoml containerize celestial_bodies_classifier_model:latest \
             --image-tag ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}/celestial-bodies-classifier:latest \
