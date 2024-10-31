@@ -1,43 +1,42 @@
 name: MLOps
 
 on:
+  # Runs on pushes targeting main branch
   push:
     branches:
       - main
+
+  # Runs on pull requests
   pull_request:
+
+  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
-  train-report-and-publish:
+  train-report-publish-and-deploy:
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: pip
-
       - name: Install dependencies
         run: pip install --requirement requirements-freeze.txt
-
       - name: Login to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: '${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}'
-
       - name: Train model
         run: dvc repro --pull
-
       - name: Setup CML
         if: github.event_name == 'pull_request'
         uses: iterative/setup-cml@v2
         with:
           version: '0.20.0'
-
       - name: Create CML report
         if: github.event_name == 'pull_request'
         env:
@@ -86,28 +85,40 @@ jobs:
 
           # Publish the CML report
           cml comment update --target=pr --publish report.md
-
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
-          registry: europe-west6-docker.pkg.dev
+          registry: ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}
           username: _json_key
           password: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
-
       - name: Import the BentoML model
         if: github.ref == 'refs/heads/main'
         run: bentoml models import model/celestial_bodies_classifier_model.bentomodel
-
       - name: Build the BentoML model artifact
         if: github.ref == 'refs/heads/main'
         run: bentoml build src
-
       - name: Containerize and publish the BentoML model artifact Docker image
         if: github.ref == 'refs/heads/main'
         run: |
-          # Containerize and tag the image directly with full path for registry
+          # Containerize the Bento
           bentoml containerize celestial_bodies_classifier:latest \
-            --image-tag europe-west6-docker.pkg.dev/mlops-project-0710/v2-mlops-vural-registry/celestial-bodies-classifier:latest
-          
+            --image-tag ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}/celestial-bodies-classifier:latest \
+            --image-tag ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}/celestial-bodies-classifier:${{ github.sha }}
           # Push the container to the Container Registry
-          docker push europe-west6-docker.pkg.dev/mlops-project-0710/v2-mlops-vural-registry/celestial-bodies-classifier:latest
+          docker push --all-tags ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}/celestial-bodies-classifier
+      - name: Get Google Cloud's Kubernetes credentials
+        if: github.ref == 'refs/heads/main'
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ secrets.GCP_K8S_CLUSTER_NAME }}
+          location: ${{ secrets.GCP_K8S_CLUSTER_ZONE }}
+      - name: Update the Kubernetes deployment
+        if: github.ref == 'refs/heads/main'
+        run: |
+          yq -i '.spec.template.spec.containers[0].image = "${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}/celestial-bodies-classifier:${{ github.sha }}"' kubernetes/deployment.yaml
+      - name: Deploy the model on Kubernetes
+        if: github.ref == 'refs/heads/main'
+        run: |
+          kubectl apply \
+            -f kubernetes/deployment.yaml \
+            -f kubernetes/service.yaml
