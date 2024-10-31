@@ -3,13 +3,37 @@
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Virtual environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
 ## DVC
 
 # DVC plots
-dvc_plots
+dvc_plots/
 
-# DVC will add new files after this line
-/model
+# BentoML specific ignores
+bentoml/
+
+# Ignore all files in the model directory except specific files
+/model/*
+!/model/celestial_bodies_classifier_model.bentomodel
+!/model/history.npy
+
+# C extension files
 *.so
+
+# Google Cloud SDK
 google-cloud-sdk/
+
+# Other
+.DS_Store
