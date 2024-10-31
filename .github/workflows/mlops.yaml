@@ -1,15 +1,10 @@
 name: MLOps
 
 on:
-  # Runs on pushes targeting main branch
   push:
     branches:
       - main
-
-  # Runs on pull requests
   pull_request:
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
@@ -110,13 +105,9 @@ jobs:
       - name: Containerize and publish the BentoML model artifact Docker image
         if: github.ref == 'refs/heads/main'
         run: |
-          # Containerize the Bento
+          # Containerize and tag the image directly with full path for registry
           bentoml containerize celestial_bodies_classifier:latest \
-            --image-tag europe-west6-docker.pkg.dev/mlops-project-0710/v2-mlops-vural-registry/celestial-bodies-classifier:latest \
-            --image-tag europe-west6-docker.pkg.dev/mlops-project-0710/v2-mlops-vural-registry/celestial-bodies-classifier:${{ github.sha }}
+            --image-tag europe-west6-docker.pkg.dev/mlops-project-0710/v2-mlops-vural-registry/celestial-bodies-classifier:latest
           
-          # Tag the image explicitly for the registry
-          docker tag celestial-bodies-classifier:latest europe-west6-docker.pkg.dev/mlops-project-0710/v2-mlops-vural-registry/celestial-bodies-classifier:latest
-
           # Push the container to the Container Registry
-          docker push --all-tags europe-west6-docker.pkg.dev/mlops-project-0710/v2-mlops-vural-registry/celestial-bodies-classifier
+          docker push europe-west6-docker.pkg.dev/mlops-project-0710/v2-mlops-vural-registry/celestial-bodies-classifier:latest
