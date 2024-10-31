@@ -37,9 +37,67 @@ jobs:
       - name: Train model
         run: dvc repro --pull
 
-      # Ajout de l’étape de vérification des modèles BentoML disponibles
-      - name: List BentoML models before import
-        run: bentoml models list
+      - name: Setup CML
+        if: github.event_name == 'pull_request'
+        uses: iterative/setup-cml@v2
+        with:
+          version: '0.20.0'
+
+      - name: Create CML report
+        if: github.event_name == 'pull_request'
+        env:
+          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Fetch all other Git branches
+          git fetch --depth=1 origin main:main
+
+          # Add title to the report
+          echo "# Experiment Report (${{ github.sha }})" >> report.md
+
+          # Compare parameters to main branch
+          echo "## Params workflow vs. main" >> report.md
+          dvc params diff main --md >> report.md
+
+          # Compare metrics to main branch
+          echo "## Metrics workflow vs. main" >> report.md
+          dvc metrics diff main --md >> report.md
+
+          # Compare plots (images) to main branch
+          dvc plots diff main
+
+          # Create plots
+          echo "## Plots" >> report.md
+
+          # Create training history plot
+          echo "### Training History" >> report.md
+          echo "#### main" >> report.md
+          echo '![](./dvc_plots/static/main_evaluation_plots_training_history.png "Training History")' >> report.md
+          echo "#### workspace" >> report.md
+          echo '![](./dvc_plots/static/workspace_evaluation_plots_training_history.png "Training History")' >> report.md
+
+          # Create predictions preview
+          echo "### Predictions Preview" >> report.md
+          echo "#### main" >> report.md
+          echo '![](./dvc_plots/static/main_evaluation_plots_pred_preview.png "Predictions Preview")' >> report.md
+          echo "#### workspace" >> report.md
+          echo '![](./dvc_plots/static/workspace_evaluation_plots_pred_preview.png "Predictions Preview")' >> report.md
+
+          # Create confusion matrix
+          echo "### Confusion Matrix" >> report.md
+          echo "#### main" >> report.md
+          echo '![](./dvc_plots/static/main_evaluation_plots_confusion_matrix.png "Confusion Matrix")' >> report.md
+          echo "#### workspace" >> report.md
+          echo '![](./dvc_plots/static/workspace_evaluation_plots_confusion_matrix.png "Confusion Matrix")' >> report.md
+
+          # Publish the CML report
+          cml comment update --target=pr --publish report.md
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}
+          username: _json_key
+          password: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
 
       - name: Import the BentoML model
         if: github.ref == 'refs/heads/main'
@@ -49,10 +107,6 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: bentoml build src
 
-      - name: List BentoML models after import
-        if: github.ref == 'refs/heads/main'
-        run: bentoml models list
-
       - name: Containerize and publish the BentoML model artifact Docker image
         if: github.ref == 'refs/heads/main'
         run: |
@@ -61,13 +115,9 @@ jobs:
             --image-tag ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}/celestial-bodies-classifier:latest \
             --image-tag ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}/celestial-bodies-classifier:${{ github.sha }}
 
-      - name: List Docker images
-        if: github.ref == 'refs/heads/main'
-        run: docker images
+          # Vérifiez si l'image est bien créée
+          docker images | grep "celestial-bodies-classifier"
 
-      - name: Push Docker images to Container Registry
-        if: github.ref == 'refs/heads/main'
-        run: |
           # Push the container to the Container Registry
           docker push --all-tags ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}/celestial-bodies-classifier
 
