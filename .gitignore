@@ -12,3 +12,4 @@ dvc_plots
 # DVC will add new files after this line
 /model
 *.so
+google-cloud-sdk/
