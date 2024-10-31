@@ -50,46 +50,15 @@ jobs:
         run: |
           # Fetch all other Git branches
           git fetch --depth=1 origin main:main
-
-          # Add title to the report
           echo "# Experiment Report (${{ github.sha }})" >> report.md
-
-          # Compare parameters to main branch
           echo "## Params workflow vs. main" >> report.md
           dvc params diff main --md >> report.md
-
-          # Compare metrics to main branch
           echo "## Metrics workflow vs. main" >> report.md
           dvc metrics diff main --md >> report.md
-
-          # Compare plots (images) to main branch
           dvc plots diff main
-
-          # Create plots
           echo "## Plots" >> report.md
-
-          # Create training history plot
           echo "### Training History" >> report.md
-          echo "#### main" >> report.md
           echo '![](./dvc_plots/static/main_evaluation_plots_training_history.png "Training History")' >> report.md
-          echo "#### workspace" >> report.md
-          echo '![](./dvc_plots/static/workspace_evaluation_plots_training_history.png "Training History")' >> report.md
-
-          # Create predictions preview
-          echo "### Predictions Preview" >> report.md
-          echo "#### main" >> report.md
-          echo '![](./dvc_plots/static/main_evaluation_plots_pred_preview.png "Predictions Preview")' >> report.md
-          echo "#### workspace" >> report.md
-          echo '![](./dvc_plots/static/workspace_evaluation_plots_pred_preview.png "Predictions Preview")' >> report.md
-
-          # Create confusion matrix
-          echo "### Confusion Matrix" >> report.md
-          echo "#### main" >> report.md
-          echo '![](./dvc_plots/static/main_evaluation_plots_confusion_matrix.png "Confusion Matrix")' >> report.md
-          echo "#### workspace" >> report.md
-          echo '![](./dvc_plots/static/workspace_evaluation_plots_confusion_matrix.png "Confusion Matrix")' >> report.md
-
-          # Publish the CML report
           cml comment update --target=pr --publish report.md
 
       - name: Log in to the Container registry
@@ -114,12 +83,9 @@ jobs:
           bentoml containerize celestial_bodies_classifier:latest \
             --image-tag ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}/celestial-bodies-classifier:latest \
             --image-tag ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}/celestial-bodies-classifier:${{ github.sha }}
-
-          # Vérifiez si l'image est bien créée
-          docker images | grep "celestial-bodies-classifier"
-
           # Push the container to the Container Registry
-          docker push --all-tags ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}/celestial-bodies-classifier
+          docker push ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}/celestial-bodies-classifier:latest
+          docker push ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}/celestial-bodies-classifier:${{ github.sha }}
 
       - name: Get Google Cloud's Kubernetes credentials
         if: github.ref == 'refs/heads/main'
