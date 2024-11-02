@@ -129,15 +129,14 @@ jobs:
         run: bentoml models import model/celestial_bodies_classifier_model.bentomodel
       - name: Build the BentoML model artifact
         run: bentoml build src
-       - name: Containerize and publish the BentoML model artifact Docker image
-        if: github.ref == 'refs/heads/main'
+      - name: Containerize and publish the BentoML model artifact Docker image
         run: |
+          # Containerize the Bento
           bentoml containerize celestial_bodies_classifier:latest \
-            --image-tag europe-west6-docker.pkg.dev/mlops-project-0710/v2-mlops-vural-registry/celestial-bodies-classifier:latest \
-            --image-tag europe-west6-docker.pkg.dev/mlops-project-0710/v2-mlops-vural-registry/celestial-bodies-classifier:${{ github.sha }}
-          docker push europe-west6-docker.pkg.dev/mlops-project-0710/v2-mlops-vural-registry/celestial-bodies-classifier:latest
-          docker push europe-west6-docker.pkg.dev/mlops-project-0710/v2-mlops-vural-registry/celestial-bodies-classifier:${{ github.sha }}
-          
+            --image-tag ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}/celestial-bodies-classifier:latest \
+            --image-tag ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}/celestial-bodies-classifier:${{ github.sha }}
+          # Push the container to the Container Registry
+          docker push --all-tags ${{ secrets.GCP_CONTAINER_REGISTRY_HOST }}/celestial-bodies-classifier
       - name: Get Google Cloud's Kubernetes credentials
         uses: google-github-actions/get-gke-credentials@v2
         with:
