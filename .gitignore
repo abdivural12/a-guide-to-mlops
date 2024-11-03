@@ -37,3 +37,6 @@ google-cloud-sdk/
 
 # Other
 .DS_Store
+
+# Label Studio
+extra-data/
